@@ -33,15 +33,14 @@ RUN mkdir -p .vscode                                            \
 EOF
 
 # deactivate the default conda environment so that the .venv is used by default
-RUN cat << 'EOF' >> /home/jovyan/.bashrc
-# Deactivate any conda environment (e.g. base)
-conda deactivate &>/dev/null
-
-# Then activate our uv‐created venv
-if [ -f "$HOME/.venv/bin/activate" ]; then
-    . "$HOME/.venv/bin/activate"
-fi
-EOF
+RUN echo -e '# Deactivate any conda environment (e.g. base)\n\
+conda deactivate &>/dev/null\n\
+\n\
+# Then activate our uv-created venv\n\
+if [ -f "$HOME/.venv/bin/activate" ]; then\n\
+    . "$HOME/.venv/bin/activate"\n\
+fi' \
+>> /home/jovyan/.bashrc
 
 # as in the original binder image, expose the port
 EXPOSE 8888
