@@ -20,7 +20,7 @@ RUN uv sync
 RUN .venv/bin/python -m ipykernel install \
      --prefix=/opt/conda               \
      --name=geodata-env                \
-     --display-name="Python (uv GeoData)"
+     --display-name="Python 3.13 (uv)"
 
 # same as above, pre-register the environment for VS Code (code-server)  that is available in the container
 RUN mkdir -p .vscode                                            \
