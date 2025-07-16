@@ -1,0 +1,47 @@
+# use the rocker/binder image as the base image, it alread has R, Python (via mamba), JupyterLab, VS Code (code-server), RStudio
+FROM ghcr.io/rocker-org/binder:latest
+
+# Copy repository contents to /home/jovyan in the container, which is the default user in this container image
+COPY --chown=jovyan . /home/jovyan
+
+# install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# make sure uv’s install dir is on PATH
+ENV PATH="/home/jovyan/.local/bin:${PATH}"
+
+# make home folder is the current working directory
+WORKDIR /home/jovyan/
+
+# restore python environment from uv.lock and pyproject.toml
+RUN uv sync
+
+# Register the .venv as a kernel for /opt/conda/bin/jupyter so that it is discoverable in JupyterLab interface when the container is started
+RUN .venv/bin/python -m ipykernel install \
+     --prefix=/opt/conda               \
+     --name=geodata-env                \
+     --display-name="Python (uv GeoData)"
+
+# same as above, pre-register the environment for VS Code (code-server)  that is available in the container
+RUN mkdir -p .vscode                                            \
+ && cat > .vscode/settings.json <<EOF
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.venvFolders": ["."],
+  "python.venvPath": "${workspaceFolder}"
+}
+EOF
+
+# deactivate the default conda environment so that the .venv is used by default
+RUN cat << 'EOF' >> /home/jovyan/.bashrc
+# Deactivate any conda environment (e.g. base)
+conda deactivate &>/dev/null
+
+# Then activate our uv‐created venv
+if [ -f "$HOME/.venv/bin/activate" ]; then
+    . "$HOME/.venv/bin/activate"
+fi
+EOF
+
+# as in the original binder image, expose the port
+EXPOSE 8888
